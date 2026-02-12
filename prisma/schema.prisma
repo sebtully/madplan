@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DietaryPreference {
+  standard
+  vegetar
+  high_protein
+}
+
+model Household {
+  id                 String            @id @default(cuid())
+  name               String
+  peopleCount        Int
+  budgetDkk          Int?
+  preference         DietaryPreference @default(standard)
+  excludeIngredients String[]
+  createdAt          DateTime          @default(now())
+  mealPlans          MealPlan[]
+}
+
+model Recipe {
+  id                 String             @id @default(cuid())
+  name               String
+  basePricePerPerson Int
+  tags               String[]
+  ingredients        String[]
+  mealPlanEntries    MealPlanRecipe[]
+}
+
+model StoreOffer {
+  id              String   @id @default(cuid())
+  storeName       String
+  ingredient      String
+  discountedPrice Int
+  validFrom       DateTime
+  validTo         DateTime
+  createdAt       DateTime @default(now())
+}
+
+model MealPlan {
+  id                String           @id @default(cuid())
+  weekStartDate     DateTime
+  totalEstimatedDkk Int
+  householdId       String
+  household         Household        @relation(fields: [householdId], references: [id])
+  recipes           MealPlanRecipe[]
+  createdAt         DateTime         @default(now())
+}
+
+model MealPlanRecipe {
+  id         String   @id @default(cuid())
+  mealPlanId String
+  recipeId   String
+  dayOfWeek  Int
+
+  mealPlan MealPlan @relation(fields: [mealPlanId], references: [id])
+  recipe   Recipe   @relation(fields: [recipeId], references: [id])
+
+  @@unique([mealPlanId, dayOfWeek])
+}
